@@ -1,9 +1,15 @@
 import { prisma } from "../../lib/prisma";
 import bcrypt from "bcrypt";
 import { LoginInput } from "../../types/auth";
+import { LoginToken } from "../../lib/auth/jwt";
+import { validateLoginInput } from "../../validation/auth";
 
 export async function login(input: LoginInput) {
   const { email, password } = input;
+
+  validateLoginInput(email, password);
+
+  const trimmedEmail = email.trim();
 
   if (!email || !password) {
     throw new Error("Email and password are required");
@@ -11,7 +17,7 @@ export async function login(input: LoginInput) {
 
   // find user by email only
   const user = await prisma.users.findFirst({
-    where: { email },
+    where: { email:trimmedEmail },
   });
 
   if (!user || !user.password) {
@@ -25,6 +31,8 @@ export async function login(input: LoginInput) {
     throw new Error("Invalid email or password");
   }
 
+
+  const token = LoginToken({ id: user.id, email: user.email });
   const { password: _, ...safeUser } = user;
-  return safeUser;
+  return {user:safeUser, token}
 }

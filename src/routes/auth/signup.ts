@@ -2,36 +2,44 @@ import { prisma } from "../../lib/prisma";
 import bcrypt from "bcrypt";
 import { SignupInput } from "../../types/auth";
 
+import { signToken } from "../../lib/auth/jwt";
+import { validateSignupInput } from "../../validation/auth";
 
 export async function signup(input: SignupInput) {
   const { name, email, password } = input;
 
-  if (!name || !email || !password) {
-    throw new Error("Name, email, and password are required");
-  }
+ 
 
+  validateSignupInput(name, email, password);
+
+  const trimmedName = name.trim();
+  const trimmedEmail = email.trim();
   // check if user already exists
   const existingUser = await prisma.users.findFirst({
-    where: { email },
+    where: { email: trimmedEmail },
   });
 
   if (existingUser) {
     throw new Error("User with this email already exists");
   }
 
-  // hash password
+  
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.users.create({
     data: {
-      name,
-      email,
+      name:trimmedName,
+      email:trimmedEmail,
       password: hashedPassword,
       
     },
   });
 
-  // don't return password
+
+
+  const token = signToken({ id: user.id, email: user.email });
   const { password: _, ...safeUser } = user;
-  return safeUser;
+  return { user: safeUser, token };
+  
+
 }

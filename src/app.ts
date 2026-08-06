@@ -3,30 +3,66 @@ import express from "express";
 import { signup } from "./routes/auth/signup";
 import { login } from "./routes/auth/login";
 import "dotenv/config";
-import { log } from "node:console";
+import cors from "cors";
+
+import { LoginToken, signToken } from "./lib/auth/jwt";
+import cookieParser from "cookie-parser";
+import { requireAuth } from "./middleware/requireAuth";
+
 
 const app = express();
+
+app.use(cors({
+  origin: "http://localhost:3000", // Next.js frontend URL
+  credentials: true,
+}));
+
 app.use(express.json());
+app.use(cookieParser());
+
+
+app.get("/me", requireAuth, (req,res)=>{
+  res.json((req as any).user);
+})
+
 
 app.post("/signup", async (req, res) => {
   try {
-    const user = await signup(req.body);
+    const { user, token } = await signup(req.body);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true, // true in production
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     res.json(user);
-    console.log("New user signed-up.")
+    console.log("New user signed-up.");
   } catch (e: any) {
     res.status(400).json({ error: e.message });
   }
 });
 
+
+
+
 app.post("/login", async (req, res) => {
   try {
-    const result = await login(req.body);
-    res.json(result);
-    console.log("Login succesful")
+    const { user, token } = await login(req.body);
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.json(user);
+    console.log("Login successful");
   } catch (e: any) {
     res.status(401).json({ error: e.message });
   }
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+app.listen(3001, () => console.log("Server running on port 3001"));
