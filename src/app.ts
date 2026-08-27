@@ -8,6 +8,7 @@ import cors from "cors";
 import { LoginToken, signToken } from "./lib/auth/jwt";
 import cookieParser from "cookie-parser";
 import { requireAuth } from "./middleware/requireAuth";
+import { prisma } from "./lib/prisma"
 
 
 const app = express();
@@ -20,10 +21,14 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+app.get("/me", requireAuth, async (req, res) => {
+  const { id } = (req as any).user;
+  const user = await prisma.users.findUnique({ where: { id } });
+  if (!user) return res.status(404).json({ error: "User not found" });
 
-app.get("/me", requireAuth, (req,res)=>{
-  res.json((req as any).user);
-})
+  const { password, ...safeUser } = user;
+  res.json(safeUser);
+});
 
 
 app.post("/signup", async (req, res) => {
@@ -32,7 +37,7 @@ app.post("/signup", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true, // true in production
+      secure: false, // true in production
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -53,7 +58,7 @@ app.post("/login", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });

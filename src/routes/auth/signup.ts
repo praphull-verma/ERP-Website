@@ -8,7 +8,7 @@ import { validateSignupInput } from "../../validation/auth";
 export async function signup(input: SignupInput) {
   const { name, email, password } = input;
 
- 
+
 
   validateSignupInput(name, email, password);
 
@@ -23,15 +23,15 @@ export async function signup(input: SignupInput) {
     throw new Error("User with this email already exists");
   }
 
-  
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.users.create({
     data: {
-      name:trimmedName,
-      email:trimmedEmail,
+      name: trimmedName,
+      email: trimmedEmail,
       password: hashedPassword,
-      
+
     },
   });
 
@@ -40,6 +40,4 @@ export async function signup(input: SignupInput) {
   const token = signToken({ id: user.id, email: user.email });
   const { password: _, ...safeUser } = user;
   return { user: safeUser, token };
-  
-
 }
