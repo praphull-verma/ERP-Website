@@ -29,6 +29,7 @@ export async function login(input: LoginInput) {
 
   if (!isMatch) {
     throw new Error("Invalid email or password");
+    
   }
 
 

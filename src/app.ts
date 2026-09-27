@@ -4,11 +4,13 @@ import { signup } from "./routes/auth/signup";
 import { login } from "./routes/auth/login";
 import "dotenv/config";
 import cors from "cors";
-
+import { upload } from "./middleware/multer";
 import { LoginToken, signToken } from "./lib/auth/jwt";
+import { uploadOnCloudinary } from "./utils/media-upload/cloudinaryUtil";
 import cookieParser from "cookie-parser";
 import { requireAuth } from "./middleware/requireAuth";
 import { prisma } from "./lib/prisma"
+import fs from "fs/promises";
 
 
 const app = express();
@@ -69,5 +71,47 @@ app.post("/login", async (req, res) => {
     res.status(401).json({ error: e.message });
   }
 });
+
+app.post(
+    "/upload",
+    upload.single("file"),
+    async (req, res) => {
+
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    message: "No file uploaded",
+                });
+            }
+
+            const cloudinaryResponse = await uploadOnCloudinary(
+                req.file.path
+            );
+
+            if (!cloudinaryResponse) {
+                return res.status(500).json({
+                    message: "Cloudinary upload failed",
+                });
+            }
+
+            // Delete temporary local file
+            await fs.unlink(req.file.path);
+
+            return res.status(200).json({
+                message: "Upload successful",
+                url: cloudinaryResponse.secure_url,
+                filename: cloudinaryResponse.original_filename
+            });
+
+        } catch (error) {
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Upload failed",
+            });
+        }
+    }
+);
+
 
 app.listen(3001, () => console.log("Server running on port 3001"));
