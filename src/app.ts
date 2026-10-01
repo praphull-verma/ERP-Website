@@ -12,6 +12,9 @@ import { requireAuth } from "./middleware/requireAuth";
 import { prisma } from "./lib/prisma"
 import fs from "fs/promises";
 import { uploadMedia } from "./routes/media/upload";
+import { createCategory } from "./routes/category";
+import categoryRoute from "./routes/categoryRoute";
+
 
 const app = express();
 
@@ -22,6 +25,8 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+app.use("/categories",categoryRoute ); 
+
 
 app.get("/me", requireAuth, async (req, res) => {
   const { id } = (req as any).user;
@@ -97,6 +102,52 @@ app.post("/upload",upload.single("file"),async (req, res)=>{
         
   }
 })
+
+
+app.post(
+    "/categories",
+    upload.single("image"),
+    async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    message: "Category image is required",
+                });
+            }
+
+            const { name, resourceCount } = req.body;
+
+            if (!name?.trim()) {
+                return res.status(400).json({
+                    message: "Category name is required",
+                });
+            }
+
+            const count = Number(resourceCount);
+
+            if (!Number.isInteger(count) || count < 0) {
+                return res.status(400).json({
+                    message: "Invalid resource count",
+                });
+            }
+
+            const category = await createCategory(
+                name,
+                count,
+                req.file.path
+            );
+
+            return res.status(201).json(category);
+
+        } catch (error: any) {
+            console.error(error);
+
+            return res.status(500).json({
+                message: error.message || "Failed to create category",
+            });
+        }
+    }
+);
 
 
 app.listen(3001, () => console.log("Server running on port 3001"));
