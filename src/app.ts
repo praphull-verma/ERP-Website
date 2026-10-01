@@ -11,7 +11,7 @@ import cookieParser from "cookie-parser";
 import { requireAuth } from "./middleware/requireAuth";
 import { prisma } from "./lib/prisma"
 import fs from "fs/promises";
-
+import { uploadMedia } from "./routes/media/upload";
 
 const app = express();
 
@@ -72,46 +72,31 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.post(
-    "/upload",
-    upload.single("file"),
-    async (req, res) => {
+app.post("/upload",upload.single("file"),async (req, res)=>{
+  try {
 
-        try {
-            if (!req.file) {
+    if (!req.file) {
                 return res.status(400).json({
                     message: "No file uploaded",
                 });
-            }
-
-            const cloudinaryResponse = await uploadOnCloudinary(
-                req.file.path
-            );
-
-            if (!cloudinaryResponse) {
-                return res.status(500).json({
-                    message: "Cloudinary upload failed",
-                });
-            }
-
-            // Delete temporary local file
-            await fs.unlink(req.file.path);
+              }
+  
+    const cloudinaryResponse = await uploadMedia(req.file.path, req.body.type);
 
             return res.status(200).json({
                 message: "Upload successful",
-                url: cloudinaryResponse.secure_url,
-                filename: cloudinaryResponse.original_filename
+                url: cloudinaryResponse.url,
+                filename:cloudinaryResponse.filename,
             });
-
-        } catch (error) {
-            console.error(error);
-
+  
+  } catch (error) {
+     console.error(error);
             return res.status(500).json({
                 message: "Upload failed",
             });
-        }
-    }
-);
+        
+  }
+})
 
 
 app.listen(3001, () => console.log("Server running on port 3001"));
