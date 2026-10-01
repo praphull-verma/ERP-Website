@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -7,7 +6,6 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
 
 model Users {
   id         String   @id @default(uuid())
@@ -24,16 +22,18 @@ enum UploadType {
   PROFILE
   POSTS
   DOCUMENTS
+  CATEGORY
 }
 
 model Media {
-  id        String     @id @default(cuid())
+  id String @id @default(cuid())
 
   // Cloudinary identifiers
-  assetId   String     @unique
-  publicId  String     @unique
-  url       String
-  filename  String
+  assetId  String    @unique
+  publicId String    @unique
+  url      String
+  filename String
+  category Category?
 
   // Application-level information
   type      UploadType
@@ -41,17 +41,27 @@ model Media {
   updatedAt DateTime   @updatedAt
 }
 
+model Category {
+  id            String  @id @default(cuid())
+  name          String  @unique
+  resourceCount Int
+  imageId       String? @unique
 
+  image Media? @relation(fields: [imageId], references: [id])
 
-/*
-Table Users [headercolor: #7a1717] {
-	id integer [ pk, increment, not null ]
-	name varchar(255)
-	email varchar(255)
-	password varchar(255)
-	address varchar(255)
-	"created at" datetime
-	"updated at" datetime
-	skill_id integer
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
-*/
+
+/**
+ * Table Users [headercolor: #7a1717] {
+ * id integer [ pk, increment, not null ]
+ * name varchar(255)
+ * email varchar(255)
+ * password varchar(255)
+ * address varchar(255)
+ * "created at" datetime
+ * "updated at" datetime
+ * skill_id integer
+ * }
+ */
