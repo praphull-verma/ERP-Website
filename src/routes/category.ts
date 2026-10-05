@@ -25,8 +25,7 @@ export async function createCategory(
 
         return category;
     } catch (error) {
-        // Ideally clean up the uploaded media in Cloudinary
-        // if database creation fails.
+        
         throw error;
     }
 }
