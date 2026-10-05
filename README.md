@@ -1,6 +1,6 @@
-# PrismaConnection API
+# ERP API
 
-PrismaConnection is a TypeScript/Express API backed by PostgreSQL and Prisma. It provides user authentication, cookie-based JWT sessions, media uploads to Cloudinary, and category management.
+ERP is a TypeScript/Express API backed by PostgreSQL and Prisma. It provides user authentication, cookie-based JWT sessions, media uploads to Cloudinary, and category management.
 
 ## Features
 
